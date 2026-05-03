@@ -56,11 +56,26 @@ if (!vehicle) {
 // Get All Trips
 export const getTrips = async (req, res) => {
   try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 1;
+
+    const skip = (page - 1) * limit;
+
+    const total = await Trip.countDocuments();
+
     const trips = await Trip.find()
       .populate("vehicleId")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 }) // latest first
+      .skip(skip)
+      .limit(limit);
 
-    res.json(trips);
+    res.json({
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      data: trips,
+    });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
