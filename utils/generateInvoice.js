@@ -25,23 +25,25 @@ const generateInvoice = (trip, res) => {
 
   let y = 50;
 
-  // ── Company Name ──
+  // ── Company Name (FIXED) ──
+  doc.y = y;
   doc
     .fontSize(22)
     .font("Helvetica-Bold")
     .fillColor("#1a1a1a")
-    .text("Shivshakti Tourist", 50, y, { align: "center" });
+    .text("Shivshakti Tourist", { align: "center" });
 
-  y += 30;
+  y = doc.y + 5;
 
-  // ── Title ──
+  // ── Title (FIXED) ──
+  doc.y = y;
   doc
     .fontSize(14)
     .font("Helvetica-Bold")
     .fillColor("#444")
-    .text("BUS TRIP INVOICE", 50, y, { align: "center" });
+    .text("BUS TRIP INVOICE", { align: "center" });
 
-  y += 30;
+  y = doc.y + 15;
   drawLine(doc, y);
 
   // ── Vehicle Info ──
@@ -55,14 +57,12 @@ const generateInvoice = (trip, res) => {
 
   y += 20;
 
-  doc
-    .fontSize(11)
-    .font("Helvetica")
-    .text("Vehicle Number:", labelX, y);
-
+  doc.fontSize(11).font("Helvetica").text("Vehicle Number:", labelX, y);
   doc
     .font("Helvetica-Bold")
-    .text(trip.vehicleId.vehicleNumber, valueX, y, { align: "right" });
+    .text(trip.vehicleId?.vehicleNumber || "N/A", valueX, y, {
+      align: "right",
+    });
 
   y += 20;
 
@@ -134,14 +134,13 @@ const generateInvoice = (trip, res) => {
   y += 40;
   drawLine(doc, y);
 
-  // ── Footer ──
-  y += 20;
-
+  // ── Footer (FIXED) ──
+  doc.y = y;
   doc
     .fontSize(10)
     .font("Helvetica")
     .fillColor("#888")
-    .text("Thank you for choosing Shivshakti Tourist", 50, y, {
+    .text("Thank you for choosing Shivshakti Tourist", {
       align: "center",
     });
 
