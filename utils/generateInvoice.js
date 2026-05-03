@@ -1,16 +1,24 @@
 import PDFDocument from "pdfkit";
 
-const generateInvoice = (trip, res) => {
-  const doc = new PDFDocument();
+const drawLine = (doc) => {
+  doc
+    .moveTo(50, doc.y)
+    .lineTo(550, doc.y)
+    .strokeColor("#cccccc")
+    .lineWidth(1)
+    .stroke();
+  doc.moveDown(0.5);
+};
 
-  // Headers
+const generateInvoice = (trip, res) => {
+  const doc = new PDFDocument({ margin: 50 });
+
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
     `attachment; filename=invoice_${trip._id}.pdf`
   );
 
-  // Handle stream properly
   doc.on("end", () => {
     console.log("✅ PDF sent successfully");
   });
@@ -21,29 +29,140 @@ const generateInvoice = (trip, res) => {
 
   doc.pipe(res);
 
-  // Content
-  doc.fontSize(20).text("Bus Trip Invoice", { align: "center" });
+  // ── Company Name ──
+  doc
+    .fontSize(22)
+    .font("Helvetica-Bold")
+    .fillColor("#1a1a1a")
+    .text("Shivshakti Tourist", { align: "center" });
 
-  doc.moveDown();
-  doc.fontSize(12).text(`Vehicle: ${trip.vehicleId.vehicleNumber}`);
-  doc.text(`Start Date: ${new Date(trip.startDate).toDateString()}`);
-  doc.text(`End Date: ${new Date(trip.endDate).toDateString()}`);
+  doc.moveDown(0.4);
 
-  doc.moveDown();
-  doc.text(`Total KM: ${trip.totalKm}`);
-  doc.text(`Rate per KM: Rs. ${trip.ratePerKm}`);
-  doc.text(`Toll: Rs. ${trip.toll}`);
-  doc.text(`Permit: Rs. ${trip.permit}`);
-  doc.text("Border Taxes:");
+  // ── Invoice Title ──
+  doc
+    .fontSize(14)
+    .font("Helvetica-Bold")
+    .fillColor("#444444")
+    .text("BUS TRIP INVOICE", { align: "center" });
 
-  trip.borderTaxes.forEach((tax) => {
-  doc.text(`- ${tax.state}: ₹${tax.amount}`);
-});
+  doc.moveDown(1);
+  drawLine(doc);
 
-  doc.moveDown();
-  doc.fontSize(14).text(`Total Amount: Rs. ${trip.totalAmount}`);
+  // ── Section 1: Vehicle & Trip Info ──
+  doc
+    .fontSize(12)
+    .font("Helvetica-Bold")
+    .fillColor("#1a1a1a")
+    .text("Vehicle & Trip Information");
 
-  doc.end(); // 👈 MUST be last line
+  doc.moveDown(0.5);
+
+  doc
+    .fontSize(11)
+    .font("Helvetica")
+    .fillColor("#333333")
+    .text(`Vehicle Number: `, { continued: true })
+    .font("Helvetica-Bold")
+    .text(trip.vehicleId.vehicleNumber);
+
+  const startDate = new Date(trip.startDate).toDateString();
+  const endDate = new Date(trip.endDate).toDateString();
+
+  doc
+    .font("Helvetica")
+    .text(`Trip Date:          `, { continued: true })
+    .font("Helvetica-Bold")
+    .text(`${startDate}  –  ${endDate}`);
+
+  doc.moveDown(1);
+  drawLine(doc);
+
+  // ── Section 2: Trip Details ──
+  doc
+    .fontSize(12)
+    .font("Helvetica-Bold")
+    .fillColor("#1a1a1a")
+    .text("Trip Details");
+
+  doc.moveDown(0.5);
+
+  const labelX = 50;
+  const valueX = 300;
+
+  const detailRow = (label, value) => {
+    const y = doc.y;
+    doc
+      .fontSize(11)
+      .font("Helvetica")
+      .fillColor("#333333")
+      .text(label, labelX, y);
+    doc
+      .font("Helvetica-Bold")
+      .text(value, valueX, y, { align: "left" });
+    doc.moveDown(0.5);
+  };
+
+  detailRow("Total KM:", `${trip.totalKm} km`);
+  detailRow("Toll Tax:", `₹${trip.toll}`);
+  detailRow("Permit:", `₹${trip.permit}`);
+
+  if (trip.borderTaxes && trip.borderTaxes.length > 0) {
+    doc.moveDown(0.3);
+
+    doc
+      .fontSize(11)
+      .font("Helvetica")
+      .fillColor("#333333")
+      .text("Border Taxes:", labelX);
+
+    doc.moveDown(0.3);
+
+    trip.borderTaxes.forEach((bt) => {
+      const y = doc.y;
+      doc
+        .fontSize(11)
+        .font("Helvetica")
+        .fillColor("#555555")
+        .text(`   • ${bt.state}`, labelX, y);
+      doc
+        .font("Helvetica-Bold")
+        .fillColor("#333333")
+        .text(`₹${bt.amount}`, valueX, y);
+      doc.moveDown(0.4);
+    });
+  }
+
+  doc.moveDown(0.5);
+  drawLine(doc);
+
+  // ── Total Amount ──
+  doc.moveDown(0.5);
+
+  const totalY = doc.y;
+  doc
+    .fontSize(13)
+    .font("Helvetica-Bold")
+    .fillColor("#1a1a1a")
+    .text("TOTAL AMOUNT", labelX, totalY);
+
+  doc
+    .fontSize(15)
+    .font("Helvetica-Bold")
+    .fillColor("#000000")
+    .text(`₹${trip.totalAmount}`, valueX, totalY);
+
+  doc.moveDown(2);
+  drawLine(doc);
+
+  // ── Footer ──
+  doc.moveDown(0.5);
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .fillColor("#888888")
+    .text("Thank you for choosing Shivshakti Tourist", { align: "center" });
+
+  doc.end();
 };
 
 export default generateInvoice;
