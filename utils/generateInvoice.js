@@ -87,7 +87,8 @@ const generateInvoice = (trip, res) => {
   doc.moveDown(0.5);
 
   const labelX = 50;
-  const valueX = 300;
+  const pageWidth = doc.page.width;
+const valueX = pageWidth - 50;
 
   const detailRow = (label, value) => {
     const y = doc.y;
@@ -98,7 +99,7 @@ const generateInvoice = (trip, res) => {
       .text(label, labelX, y);
     doc
       .font("Helvetica-Bold")
-      .text(value, valueX, y, { align: "left" });
+      .text(value, valueX, y, { align: "right" });
     doc.moveDown(0.5);
   };
 
@@ -127,7 +128,7 @@ const generateInvoice = (trip, res) => {
       doc
         .font("Helvetica-Bold")
         .fillColor("#333333")
-        .text(`₹${bt.amount}`, valueX, y);
+        .text(`₹${bt.amount}`, valueX, y, { align: "right" });
       doc.moveDown(0.4);
     });
   }
@@ -149,7 +150,7 @@ const generateInvoice = (trip, res) => {
     .fontSize(15)
     .font("Helvetica-Bold")
     .fillColor("#000000")
-    .text(`₹${trip.totalAmount}`, valueX, totalY);
+    .text(`₹${trip.totalAmount}`, valueX, totalY, { align: "right" });
 
   doc.moveDown(2);
   drawLine(doc);
