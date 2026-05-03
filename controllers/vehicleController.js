@@ -3,8 +3,23 @@ import Vehicle from "../models/Vehicle.js";
 // Add Vehicle
 export const addVehicle = async (req, res) => {
   try {
-    console.log("BODY:", req.body);
     const { vehicleNumber, type, capacity } = req.body;
+
+    // validation
+    if (!vehicleNumber || !type || !capacity) {
+      return res.status(400).json({
+        message: "All fields are required",
+      });
+    }
+
+    // 🔥 CHECK DUPLICATE FIRST
+    const existing = await Vehicle.findOne({ vehicleNumber });
+
+    if (existing) {
+      return res.status(400).json({
+        message: "Vehicle already exists",
+      });
+    }
 
     const vehicle = new Vehicle({
       vehicleNumber,
@@ -15,8 +30,13 @@ export const addVehicle = async (req, res) => {
     await vehicle.save();
 
     res.status(201).json(vehicle);
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Add Vehicle Error:", error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
   }
 };
 
