@@ -21,11 +21,21 @@ const generateInvoice = (trip, res) => {
   doc.pipe(res);
 
   const labelX = 50;
-  const valueX = doc.page.width - 50;
+  const pageWidth = doc.page.width;
+  const contentWidth = pageWidth - 100; // 50px margin each side
+
+  // Right-aligned text: start at labelX, full content width, align right
+  const rightText = (text, y, options = {}) => {
+    doc.text(text, labelX, y, {
+      width: contentWidth,
+      align: "right",
+      ...options,
+    });
+  };
 
   let y = 50;
 
-  // ── Company Name (FIXED) ──
+  // ── Company Name ──
   doc.y = y;
   doc
     .fontSize(22)
@@ -35,7 +45,7 @@ const generateInvoice = (trip, res) => {
 
   y = doc.y + 5;
 
-  // ── Title (FIXED) ──
+  // ── Title ──
   doc.y = y;
   doc
     .fontSize(14)
@@ -57,12 +67,9 @@ const generateInvoice = (trip, res) => {
 
   y += 20;
 
-  doc.fontSize(11).font("Helvetica").text("Vehicle Number:", labelX, y);
-  doc
-    .font("Helvetica-Bold")
-    .text(trip.vehicleId?.vehicleNumber || "N/A", valueX, y, {
-      align: "right",
-    });
+  doc.fontSize(11).font("Helvetica").fillColor("#000").text("Vehicle Number:", labelX, y);
+  doc.font("Helvetica-Bold");
+  rightText(trip.vehicleId?.vehicleNumber || "N/A", y);
 
   y += 20;
 
@@ -70,9 +77,8 @@ const generateInvoice = (trip, res) => {
   const endDate = new Date(trip.endDate).toDateString();
 
   doc.font("Helvetica").text("Trip Date:", labelX, y);
-  doc
-    .font("Helvetica-Bold")
-    .text(`${startDate} - ${endDate}`, valueX, y, { align: "right" });
+  doc.font("Helvetica-Bold");
+  rightText(`${startDate} - ${endDate}`, y);
 
   y += 30;
   drawLine(doc, y);
@@ -80,37 +86,32 @@ const generateInvoice = (trip, res) => {
   // ── Trip Details ──
   y += 20;
 
-  doc
-    .fontSize(12)
-    .font("Helvetica-Bold")
-    .text("Trip Details", labelX, y);
+  doc.fontSize(12).font("Helvetica-Bold").text("Trip Details", labelX, y);
 
   y += 20;
 
   const row = (label, value) => {
-    doc.font("Helvetica").fontSize(11).text(label, labelX, y);
-    doc
-      .font("Helvetica-Bold")
-      .text(value, valueX, y, { align: "right" });
+    doc.font("Helvetica").fontSize(11).fillColor("#000").text(label, labelX, y);
+    doc.font("Helvetica-Bold");
+    rightText(value, y);
     y += 20;
   };
 
   row("Total KM:", `${trip.totalKm} km`);
-  row("Toll Tax:", `₹${trip.toll}`);
-  row("Permit:", `₹${trip.permit}`);
+  row("Toll Tax:", `\u20B9${trip.toll}`);
+  row("Permit:", `\u20B9${trip.permit}`);
 
   // ── Border Taxes ──
   if (trip.borderTaxes && trip.borderTaxes.length > 0) {
     y += 10;
 
-    doc.font("Helvetica").text("Border Taxes:", labelX, y);
+    doc.font("Helvetica").fontSize(11).text("Border Taxes:", labelX, y);
     y += 15;
 
     trip.borderTaxes.forEach((bt) => {
-      doc.text(`• ${bt.state}`, labelX + 10, y);
-      doc
-        .font("Helvetica-Bold")
-        .text(`₹${bt.amount}`, valueX, y, { align: "right" });
+      doc.font("Helvetica").text(`• ${bt.state}`, labelX + 10, y);
+      doc.font("Helvetica-Bold");
+      rightText(`\u20B9${bt.amount}`, y);
       y += 18;
     });
   }
@@ -124,18 +125,17 @@ const generateInvoice = (trip, res) => {
   doc
     .fontSize(13)
     .font("Helvetica-Bold")
+    .fillColor("#000")
     .text("TOTAL AMOUNT", labelX, y);
 
-  doc
-    .fontSize(16)
-    .font("Helvetica-Bold")
-    .text(`₹${trip.totalAmount}`, valueX, y, { align: "right" });
+  doc.fontSize(16).font("Helvetica-Bold");
+  rightText(`\u20B9${trip.totalAmount}`, y);
 
   y += 40;
   drawLine(doc, y);
 
-  // ── Footer (FIXED) ──
-  doc.y = y;
+  // ── Footer ──
+  doc.y = y + 10;
   doc
     .fontSize(10)
     .font("Helvetica")
