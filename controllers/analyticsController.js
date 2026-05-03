@@ -1,4 +1,5 @@
 import Trip from "../models/Trip.js";
+import Vehicle from "../models/Vehicle.js";
 
 // 🔥 SUMMARY API
 export const getSummary = async (req, res) => {
@@ -78,57 +79,52 @@ export const getFilteredTrips = async (req, res) => {
   }
 };
 
-
 export const getVehicleWiseData = async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const { filter } = req.query;
 
-    const match = {};
+    let startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
 
-    if (startDate && endDate) {
-      match.startDate = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
-      };
+    if (filter === "week") {
+      startDate.setDate(startDate.getDate() - 7);
+    } else if (filter === "month") {
+      startDate.setMonth(startDate.getMonth() - 1);
+    } else if (filter === "3months") {
+      startDate.setMonth(startDate.getMonth() - 3);
     }
 
-    const data = await Trip.aggregate([
-      { $match: match },
+    // ✅ STEP 1: GET ALL VEHICLES
+    const vehicles = await Vehicle.find();
 
-      {
-        $group: {
-          _id: "$vehicleId",
-          totalRevenue: { $sum: "$totalAmount" },
-          totalToll: { $sum: "$toll" },
-          totalPermit: { $sum: "$permit" },
-          trips: { $sum: 1 },
-        },
-      },
+    // ✅ STEP 2: MAP EACH VEHICLE
+    const result = await Promise.all(
+      vehicles.map(async (vehicle) => {
+        const trips = await Trip.find({
+          vehicleId: vehicle._id,
+          createdAt: { $gte: startDate },
+        });
 
-      {
-        $lookup: {
-          from: "vehicles",
-          localField: "_id",
-          foreignField: "_id",
-          as: "vehicle",
-        },
-      },
+        const totalTrips = trips.length;
 
-      { $unwind: "$vehicle" },
+        const totalRevenue = trips.reduce(
+          (sum, t) => sum + (t.totalAmount || 0),
+          0
+        );
 
-      {
-        $project: {
-          vehicleNumber: "$vehicle.vehicleNumber",
-          totalRevenue: 1,
-          totalToll: 1,
-          totalPermit: 1,
-          trips: 1,
-        },
-      },
-    ]);
+        return {
+          vehicleId: vehicle._id,
+          vehicleNumber: vehicle.vehicleNumber,
+          totalTrips,
+          totalRevenue,
+        };
+      })
+    );
 
-    res.json(data);
+    res.json(result);
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Vehicle-wise error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
