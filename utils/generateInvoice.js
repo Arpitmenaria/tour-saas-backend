@@ -1,4 +1,9 @@
 import PDFDocument from "pdfkit";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const FONTS_DIR = join(__dirname, "../fonts");
 
 const drawLine = (doc, y) => {
   doc
@@ -11,6 +16,9 @@ const drawLine = (doc, y) => {
 
 const generateInvoice = (trip, res) => {
   const doc = new PDFDocument({ margin: 50 });
+
+  doc.registerFont("NotoSans", join(FONTS_DIR, "NotoSans-Regular.ttf"));
+  doc.registerFont("NotoSans-Bold", join(FONTS_DIR, "NotoSans-Bold.ttf"));
 
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
@@ -39,7 +47,7 @@ const generateInvoice = (trip, res) => {
   doc.y = y;
   doc
     .fontSize(22)
-    .font("Helvetica-Bold")
+    .font("NotoSans-Bold")
     .fillColor("#1a1a1a")
     .text("Shivshakti Tourist", { align: "center" });
 
@@ -49,7 +57,7 @@ const generateInvoice = (trip, res) => {
   doc.y = y;
   doc
     .fontSize(14)
-    .font("Helvetica-Bold")
+    .font("NotoSans-Bold")
     .fillColor("#444")
     .text("BUS TRIP INVOICE", { align: "center" });
 
@@ -61,14 +69,14 @@ const generateInvoice = (trip, res) => {
 
   doc
     .fontSize(12)
-    .font("Helvetica-Bold")
+    .font("NotoSans-Bold")
     .fillColor("#000")
     .text("Vehicle & Trip Information", labelX, y);
 
   y += 20;
 
-  doc.fontSize(11).font("Helvetica").fillColor("#000").text("Vehicle Number:", labelX, y);
-  doc.font("Helvetica-Bold");
+  doc.fontSize(11).font("NotoSans").fillColor("#000").text("Vehicle Number:", labelX, y);
+  doc.font("NotoSans-Bold");
   rightText(trip.vehicleId?.vehicleNumber || "N/A", y);
 
   y += 20;
@@ -76,8 +84,8 @@ const generateInvoice = (trip, res) => {
   const startDate = new Date(trip.startDate).toDateString();
   const endDate = new Date(trip.endDate).toDateString();
 
-  doc.font("Helvetica").text("Trip Date:", labelX, y);
-  doc.font("Helvetica-Bold");
+  doc.font("NotoSans").text("Trip Date:", labelX, y);
+  doc.font("NotoSans-Bold");
   rightText(`${startDate} - ${endDate}`, y);
 
   y += 30;
@@ -86,13 +94,13 @@ const generateInvoice = (trip, res) => {
   // ── Trip Details ──
   y += 20;
 
-  doc.fontSize(12).font("Helvetica-Bold").text("Trip Details", labelX, y);
+  doc.fontSize(12).font("NotoSans-Bold").text("Trip Details", labelX, y);
 
   y += 20;
 
   const row = (label, value) => {
-    doc.font("Helvetica").fontSize(11).fillColor("#000").text(label, labelX, y);
-    doc.font("Helvetica-Bold");
+    doc.font("NotoSans").fontSize(11).fillColor("#000").text(label, labelX, y);
+    doc.font("NotoSans-Bold");
     rightText(value, y);
     y += 20;
   };
@@ -105,12 +113,12 @@ const generateInvoice = (trip, res) => {
   if (trip.borderTaxes && trip.borderTaxes.length > 0) {
     y += 10;
 
-    doc.font("Helvetica").fontSize(11).text("Border Taxes:", labelX, y);
+    doc.font("NotoSans").fontSize(11).text("Border Taxes:", labelX, y);
     y += 15;
 
     trip.borderTaxes.forEach((bt) => {
-      doc.font("Helvetica").text(`• ${bt.state}`, labelX + 10, y);
-      doc.font("Helvetica-Bold");
+      doc.font("NotoSans").text(`• ${bt.state}`, labelX + 10, y);
+      doc.font("NotoSans-Bold");
       rightText(`\u20B9${bt.amount}`, y);
       y += 18;
     });
@@ -124,11 +132,11 @@ const generateInvoice = (trip, res) => {
 
   doc
     .fontSize(13)
-    .font("Helvetica-Bold")
+    .font("NotoSans-Bold")
     .fillColor("#000")
     .text("TOTAL AMOUNT", labelX, y);
 
-  doc.fontSize(16).font("Helvetica-Bold");
+  doc.fontSize(16).font("NotoSans-Bold");
   rightText(`\u20B9${trip.totalAmount}`, y);
 
   y += 40;
@@ -138,7 +146,7 @@ const generateInvoice = (trip, res) => {
   doc.y = y + 10;
   doc
     .fontSize(10)
-    .font("Helvetica")
+    .font("NotoSans")
     .fillColor("#888")
     .text("Thank you for choosing Shivshakti Tourist", {
       align: "center",
