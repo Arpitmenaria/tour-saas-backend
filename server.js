@@ -8,6 +8,7 @@ import connectDB from "./config/db.js";
 import vehicleRoutes from "./routes/vehicleRoutes.js";
 import taxRoutes from "./routes/taxRoutes.js";
 import runTaxReminder from "./cron/taxReminder.js";
+import runKeepAlive from "./cron/keepAlive.js";
 import tripRoutes from "./routes/tripRoutes.js";
 import invoiceRoutes from "./routes/invoiceRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
@@ -44,10 +45,16 @@ app.get("/", (req, res) => {
   res.send("API Running...");
 });
 
+// Health check (used by the keep-alive self-ping)
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 // Start Server
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   runTaxReminder();
+  runKeepAlive();
 });
